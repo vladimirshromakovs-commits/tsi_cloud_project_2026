@@ -1,0 +1,43 @@
+version: 0.2
+
+# CodeBuild stage for the Django lab.
+# Runs the tests, then passes the whole project on to Elastic Beanstalk.
+# Place this file in the repository root, next to manage.py.
+
+env:
+  variables:
+    # Test-only values; real values are set in Elastic Beanstalk.
+    SECRET_KEY: "djfksdjfk23748**__JKL:JL"
+    DEBUG: "False"
+    ALLOWED_HOSTS: "*"
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.14            # match your Elastic Beanstalk Python platform
+    commands:
+      - echo "Python version:" && python --version
+      - python -m pip install --upgrade pip
+      - pip install -r requirements.txt
+
+  pre_build:
+    commands:
+      - python manage.py check
+
+  build:
+    commands:
+      - python manage.py test
+      - python manage.py collectstatic --noinput
+
+  post_build:
+    commands:
+      - echo "Build completed on $(date)"
+
+artifacts:
+  files:
+    - '**/*'
+  exclude-paths:
+    - '.git/**/*'
+    - '.venv/**/*'
+    - '**/__pycache__/**/*'
+    - 'db.sqlite3'
